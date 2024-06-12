@@ -23,6 +23,7 @@ __global__ void laplacian_kernel(T * f, const T * u, int nx, int ny, int nz, T i
            + (u[pos - slice] + u[pos + slice]) * invhz2;
 } 
 
+template <typename T>
 void laplacian(T *d_f, T *d_u, int nx, int ny, int nz, int BLK_X, int BLK_Y, int BLK_Z, T hx, T hy, T hz) {
 
     dim3 block(BLK_X, BLK_Y, BLK_Z);

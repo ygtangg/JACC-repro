@@ -15,7 +15,7 @@
 
 template <typename T>
 __global__ void test_function_kernel(T *u, int nx, int ny, int nz,
-                                     T hx, T hy, T hz) {
+                                     T hx, T hy, T hz) { 
 
     int i = threadIdx.x + blockIdx.x * blockDim.x;
     int j = threadIdx.y + blockIdx.y * blockDim.y;
