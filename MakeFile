@@ -1,0 +1,15 @@
+CC=g++
+NVCC=nvcc 
+DOUBLE=true
+FLAGS=-O3 -std=c++17
+
+
+ifeq "$(DOUBLE)" "true"
+	PRECISION=-DDOUBLE
+	SUFFIX=dp
+else
+	PRECISION=
+	SUFFIX=sp
+endif
+
+	$(CC) -o laplacian_$(SUFFIX) laplacian.cpp $(FLAGS) $(PRECISION) 
