@@ -5,17 +5,17 @@
 #include <vector>
 #include "kernel.cu"
 
-#define CUDA_CHECK(stat) {
-    if (stat != cudaSuccess) {
+#define CUDA_CHECK(stat) { \
+    if (stat != cudaSuccess) { \
         std::cerr << "CUDA error: " << cudaGetErrorString(stat) <<  \
         " in file " << __FILE__ << ":" << __LINE__ << std::endl;  \
-        exit(-1);
-    }
+        exit(-1); \
+    } \
 }
 
 template <typename T>
 __global__ void test_function_kernel(T *u, int nx, int ny, int nz,
-                                     T hx, T hy, T hz) { 
+                                     T hx, T hy, T hz) {
 
     int i = threadIdx.x + blockIdx.x * blockDim.x;
     int j = threadIdx.y + blockIdx.y * blockDim.y;
@@ -50,8 +50,8 @@ void test_function(T *d_f, int nx, int ny, int nz, T hx, T hy, T hz) {
 }
 
 template <typename T>
-__global__ void check_kernel(int *error, const T *f, 
-                             int nx, int ny, int nz, 
+__global__ void check_kernel(int *error, const T *f,
+                             int nx, int ny, int nz,
                              T hx, T hy, T hz,
                              double tolerance) {
 
@@ -72,9 +72,9 @@ __global__ void check_kernel(int *error, const T *f,
     // Laplacian of u when u is initialized using `test_function_kernel`
     T expected_f = 3;
     if ( fabs(f[pos] - expected_f) / expected_f > tolerance) {
-        atomicAdd(error, 1); 
+        atomicAdd(error, 1);
     }
-} 
+}
 
 template <typename T>
 int check(T *d_f, int nx, int ny, int nz, T hx, T hy, T hz, T tolerance=1e-6) {
@@ -82,27 +82,27 @@ int check(T *d_f, int nx, int ny, int nz, T hx, T hy, T hz, T tolerance=1e-6) {
     dim3 block(256, 1);
     dim3 grid((nx - 1) / block.x + 1, ny, nz);
 
-    int *d_error; 
+    int *d_error;
     CUDA_CHECK( cudaMalloc(&d_error, sizeof(int))   );
     CUDA_CHECK( cudaMemset(d_error, 0, sizeof(int)) );
     check_kernel<<<grid, block>>>(d_error, d_f, nx, ny, nz, hx, hy, hz, tolerance);
     CUDA_CHECK( cudaGetLastError() );
     int *error = new int[1];
     error[0] = 1;
-    CUDA_CHECK( cudaMemcpy(error, d_error, sizeof(int), hipMemcpyDeviceToHost) ); 
+    CUDA_CHECK( cudaMemcpy(error, d_error, sizeof(int), cudaMemcpyDeviceToHost) );
     int out = error[0];
     delete[] error;
 
     return out;
-} 
+}
 
 int main(int argc, char **argv) {
-    using precision = double; 
+    using precision = double;
     // Default thread block sizes
     int BLK_X = 256;
     int BLK_Y = 1;
     int BLK_Z = 1;
-    
+
     // Default problem size
     size_t nx = 512, ny = 512, nz = 512;
 #ifdef DOUBLE
@@ -120,23 +120,23 @@ int main(int argc, char **argv) {
     if (argc > 6) BLK_Z = atoi(argv[6]);
 
 #ifdef DOUBLE
-    cout << "Precision: double" << endl;
+    std::cout << "Precision: double" << std::endl;
 #else
-    cout << "Precision: float" << endl;
+    std::cout << "Precision: float" << std::endl;
 #endif
-    cout << "nx,ny,nz = " << nx << ", " << ny << ", " << nz << endl;
-    cout << "block sizes = " << BLK_X << ", " << BLK_Y << ", " << BLK_Z << endl;
+    std::cout << "nx,ny,nz = " << nx << ", " << ny << ", " << nz << std::endl;
+    std::cout << "block sizes = " << BLK_X << ", " << BLK_Y << ", " << BLK_Z << std::endl;
 
     // Theoretical fetch and write sizes:
     size_t theoretical_fetch_size = (nx * ny * nz - 8 - 4 * (nx - 2) - 4 * (ny - 2) - 4 * (nz - 2) ) * sizeof(precision);
     size_t theoretical_write_size = ((nx - 2) * (ny - 2) * (nz - 2)) * sizeof(precision);
-    
-    cout << "Theoretical fetch size (GB): " << theoretical_fetch_size * 1e-9 << endl;
-    cout << "Theoretical write size (GB): " << theoretical_write_size * 1e-9 << endl;
+
+    std::cout << "Theoretical fetch size (GB): " << theoretical_fetch_size * 1e-9 << std::endl;
+    std::cout << "Theoretical write size (GB): " << theoretical_write_size * 1e-9 << std::endl;
 
 #ifdef THEORY
-    cout << "Theoretical fetch size (GB): " << theoretical_fetch_size * 1e-9 << endl;
-    cout << "Theoretical write size (GB): " << theoretical_write_size * 1e-9 << endl;
+    std::cout << "Theoretical fetch size (GB): " << theoretical_fetch_size * 1e-9 << std::endl;
+    std::cout << "Theoretical write size (GB): " << theoretical_write_size * 1e-9 << std::endl;
 #endif
 
     size_t numbytes = nx * ny * nz * sizeof(precision);
@@ -159,8 +159,8 @@ int main(int argc, char **argv) {
     // Verification
     int error = check(d_f, nx, ny, nz, hx, hy, hz, tolerance);
     if (error)
-        cout << "Correctness test failed. Pointwise error larger than " << tolerance << endl;
-    
+        std::cout << "Correctness test failed. Pointwise error larger than " << tolerance << std::endl;
+
     // Timing
     float total_elapsed = 0;
     float elapsed;
@@ -193,4 +193,4 @@ int main(int argc, char **argv) {
 
     return 0;
 }
-
+                                                
